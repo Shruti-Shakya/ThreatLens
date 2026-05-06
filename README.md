@@ -8,12 +8,12 @@ ThreatLens is a full-stack cybersecurity dashboard that aggregates threat data f
 
 ## Features
 
-- 🔴 Real-time threat intelligence feed
-- 📊 Interactive cybersecurity dashboard
-- 🔗 Multiple security API integrations
-- 🎯 Incident detection and monitoring
-- 📈 Data visualization and analytics
-- 🔒 Responsive web-based interface
+- Real-time threat intelligence feed
+- Interactive cybersecurity dashboard
+- Integration with multiple security APIs
+- Incident detection and monitoring
+- Data visualization and analytics
+- Responsive web interface
 
 ## Tech Stack
 
@@ -45,26 +45,30 @@ Before you begin, ensure you have installed:
 
 ## Installation
 
-1. **Clone the repository:**
-git clone https://github.com/Darshita-Saraswat/Threatlens.git
-cd Threatlens
-2. **Install backend dependencies:**
-cd backend
-npm install
+1. Clone the repository:
+   git clone https://github.com/Shruti-Shakya/Threatlens.git
+
+2. Navigate to project:
+   cd Threatlens
+
+3. Install backend dependencies:
+   cd backend
+   npm install
 
 
 ## Configuration
 
 Create a `.env` file in the `backend/` folder with your configuration:
-PORT=3000
+PORT=5000
+Server runs on http://localhost:5000
 
 
 ## Running the Project-
 
 ### Start Backend Server
 cd backend
-npm start
-Server runs on `http://localhost:3000`
+node index.js
+Server runs on http://localhost:5000
 
 ### Start Frontend
 
@@ -75,11 +79,18 @@ Access dashboard at `http://localhost:8082/dashboard.html`
 
 ## Usage
 
-1. Start the backend server (runs on port 3000)
+1. Start the backend server (runs on port 5000)
 2. Start the frontend with http-server (runs on port 8082)
 3. Open your browser and navigate to `http://localhost:8082/dashboard.html`
 4. View real-time threat incidents on the dashboard
 5. Analyze security data in real-time
+
+## How It Works
+
+- The backend (Node.js + Express) runs on port 5000 and handles API requests
+- The frontend is served using http-server on port 8082
+- The frontend fetches and displays threat data from the backend
+- The dashboard updates to show real-time cybersecurity incidents
 
 ## Future Enhancements
 
@@ -94,14 +105,24 @@ Access dashboard at `http://localhost:8082/dashboard.html`
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Author
+## Contributors
+- Darshita Saraswat – Core development and project structure
+- Shruti Shakya – Setup, debugging, integration, and AI-assisted development
 
-**Darshita Saraswat**  
-GitHub: [@Darshita-Saraswat](https://github.com/Darshita-Saraswat)
+## My Contributions (Shruti Shakya)
+
+- Set up and ran the full-stack project locally
+- Fixed errors related to npm and server startup
+- Tested the application and verified dashboard functionality
+- Used AI tools to assist in understanding and debugging the project
+
+## AI Assistance
+
+This project was developed with the help of AI tools for code generation and guidance. All generated code was reviewed, tested, and modified as needed to ensure correct functionality and integration.
 
 ## Contact
 
-For questions or collaboration: darshitas.26@gmail.com
+For questions or collaboration: shruti.shakya411@gmail.com
 
 
 
