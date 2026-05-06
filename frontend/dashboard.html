@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ThreatLens - Cybersecurity Intelligence</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      overflow-x: hidden;
+    }
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: relative;
+      width: 240px;
+      background: #111827;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 16px;
+      transition: width 0.2s ease, transform 0.2s ease;
+      z-index: 20;
+    }
+    .sidebar.collapsed {
+      width: 70px;
+    }
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+    .sidebar-logo-shield {
+      width: 28px;
+      height: 28px;
+      fill: #38bdf8;
+    }
+    .sidebar-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #00d4ff;
+      white-space: nowrap;
+    }
+    .sidebar.collapsed .sidebar-title {
+      display: none;
+    }
+    .sidebar-toggle {
+      position: absolute;
+      top: 18px;
+      right: -14px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: none;
+      background: #1f2937;
+      color: #e5e7eb;
+      cursor: pointer;
+      box-shadow: 0 0 0 2px #0f172a;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sidebar-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .sidebar-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: none;
+      background: #1f2937;
+      color: #e5e7eb;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+      text-align: left;
+    }
+    .sidebar-btn:hover {
+      background: #111827;
+      transform: translateY(-1px);
+    }
+    .sidebar-btn span.icon {
+      width: 22px;
+      text-align: center;
+      font-size: 1.05rem;
+    }
+    .sidebar.collapsed .sidebar-btn span.label {
+      display: none;
+    }
+
+    /* Main */
+    .main-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .main-header {
+      display: flex;
+      align-items: center;
+      padding: 14px 30px;
+      border-bottom: 1px solid #1f2937;
+      background: #020617;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .main-header .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #38bdf8;
+    }
+    .main-header .logo svg {
+      width: 30px;
+      height: 30px;
+      fill: #38bdf8;
+    }
+    .main-header nav {
+      margin-left: auto;
+      display: flex;
+      gap: 24px;
+    }
+    .main-header nav a {
+      text-decoration: none;
+      color: #9ca3af;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .main-header nav a.active,
+    .main-header nav a:hover {
+      color: #22d3ee;
+      font-weight: 600;
+    }
+
+    /* Bell */
+    .notif-bell {
+      margin-left: 20px;
+      position: relative;
+      cursor: pointer;
+    }
+    .notif-bell svg {
+      width: 22px;
+      height: 22px;
+      fill: #e5e7eb;
+    }
+    .notif-dot {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #f97373;
+      display: none;
+    }
+    .notif-panel {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 32px;
+      min-width: 280px;
+      background: #111827;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      padding: 14px;
+      z-index: 30;
+    }
+    .notif-panel h4 {
+      margin: 0 0 8px 0;
+      font-size: 1rem;
+      color: #e5e7eb;
+    }
+    .notif-panel ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .notif-panel li {
+      font-size: 0.9rem;
+      padding: 6px 0;
+      border-bottom: 1px solid #1f2937;
+    }
+    .notif-panel li:last-child {
+      border-bottom: none;
+    }
+
+    .page-content {
+      padding: 22px 32px 36px 32px;
+    }
+
+    /* Home */
+    #homePage .hero {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      align-items: stretch;
+      margin-bottom: 30px;
+    }
+    #homePage .hero-text {
+      flex: 1;
+      min-width: 260px;
+    }
+    #homePage .hero-title {
+      font-size: 2.4rem;
+      font-weight: 900;
+      color: #22d3ee;
+      margin-bottom: 8px;
+    }
+    #homePage .hero-subtitle {
+      font-size: 1.08rem;
+      color: #9ca3af;
+      margin-bottom: 18px;
+    }
+    #homePage .hero-actions button {
+      padding: 8px 20px;
+      border-radius: 7px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      margin-right: 10px;
+      font-size: 0.97rem;
+      background: #111827;
+      color: #38bdf8;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    #homePage .hero-actions button.active {
+      background: #1d4ed8;
+      color: #e5e7eb;
+    }
+    #homePage .hero-visual {
+      min-width: 260px;
+      max-width: 360px;
+      background: radial-gradient(circle at top, #38bdf8, #020617);
+      border-radius: 18px;
+      padding: 22px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    #homePage .hero-visual svg {
+      width: 140px;
+      height: 140px;
+      filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.7));
+    }
+
+    .map-section {
+      margin-top: 12px;
+    }
+    #dashboardMap {
+      height: 320px;
+      border-radius: 12px;
+      background: #020617;
+    }
+    .legend {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: #d1d5db;
+    }
+    .legend span.dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      margin-right: 4px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-top: 28px;
+    }
+    .stat-card {
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: #020617;
+      border: 1px solid #1f2937;
+    }
+    .stat-label {
+      font-size: 0.9rem;
+      color: #9ca3af;
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    /* Incidents */
+    #incidentsPage .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+    }
+    #incidentsPage .filters select,
+    #incidentsPage .filters input {
+      background: #020617;
+      color: #e5e7eb;
+      border-radius: 6px;
+      border: 1px solid #1f2937;
+      padding: 6px 8px;
+      font-size: 0.9rem;
+    }
+    .incidents-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .incident-card {
+      background: #020617;
+      border-radius: 10px;
+      border: 1px solid #1f2937;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: box-shadow 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
+    }
+    .incident-card:hover {
+      box-shadow: 0 0 0 2px #38bdf8;
+      transform: translateY(-1px);
+      border-color: #38bdf8;
+    }
+    .incident-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .severity-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 3px;
+    }
+    .severity-critical {
+      background: rgba(239, 68, 68, 0.18);
+      color: #f87171;
+    }
+    .severity-high {
+      background: rgba(59, 130, 246, 0.18);
+      color: #60a5fa;
+    }
+    .severity-medium {
+      background: rgba(234, 179, 8, 0.18);
+      color: #fde047;
+    }
+    .severity-low {
+      background: rgba(34, 197, 94, 0.18);
+      color: #4ade80;
+    }
+    .type-badge {
+      display: inline-block;
+      margin-top: 3px;
+      font-size: 0.75rem;
+      color: #93c5fd;
+    }
+    .incident-meta {
+      margin-top: 3px;
+      color: #9ca3af;
+      font-size: 0.8rem;
+    }
+    .incident-description {
+      margin-top: 6px;
+      color: #d1d5db;
+      font-size: 0.86rem;
+    }
+
+    /* Analytics */
+    #analyticsPage .chart-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 22px;
+      margin-top: 16px;
+    }
+    .chart-card {
+      background: #020617;
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+      padding: 14px 12px 20px 12px;
+    }
+    .chart-card h3 {
+      margin: 0 0 10px 0;
+      font-size: 1rem;
+      color: #e5e7eb;
+    }
+    #analyticsLegend {
+      margin-top: 14px;
+      font-size: 0.9rem;
+      color: #d1d5db;
+    }
+
+    /* Reports */
+    #reportsPage .reports-intro {
+      font-size: 0.95rem;
+      color: #9ca3af;
+      margin-bottom: 14px;
+    }
+    .reports-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .report-item {
+      padding: 10px 0;
+      border-bottom: 1px solid #1f2937;
+    }
+    .report-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #60a5fa;
+    }
+    .report-meta {
+      font-size: 0.84rem;
+      color: #9ca3af;
+      margin-top: 3px;
+    }
+    .report-desc {
+      font-size: 0.88rem;
+      color: #d1d5db;
+      margin-top: 4px;
+    }
+    .report-link {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 0.86rem;
+      color: #38bdf8;
+      text-decoration: none;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #38bdf8;
+    }
+    .report-link:hover {
+      background: #0f172a;
+    }
+
+    /* Generic modal */
+    .modal-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      z-index: 60;
+    }
+    .modal {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: #020617;
+      border-radius: 16px;
+      padding: 22px 20px 20px 20px;
+      width: 360px;
+      max-width: 94vw;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.12rem;
+    }
+    .modal-close {
+      border: none;
+      background: transparent;
+      color: #9ca3af;
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+    .modal-body {
+      font-size: 0.9rem;
+    }
+    .form-field {
+      margin-bottom: 10px;
+    }
+    .form-field label {
+      display: block;
+      margin-bottom: 2px;
+      color: #9ca3af;
+      font-size: 0.86rem;
+    }
+    .form-field input,
+    .form-field textarea {
+      width: 100%;
+      background: #020617;
+      color: #e5e7eb;
+      border-radius: 6px;
+      border: 1px solid #1f2937;
+      padding: 6px 8px;
+      font-size: 0.9rem;
+    }
+    .form-field textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    .modal-actions {
+      margin-top: 12px;
+      text-align: right;
+    }
+    .btn-outline,
+    .btn-primary {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #38bdf8;
+      background: transparent;
+      color: #38bdf8;
+      font-size: 0.86rem;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+    .btn-primary {
+      background: #38bdf8;
+      color: #020617;
+    }
+
+    /* Rate stars */
+    .stars {
+      display: flex;
+      gap: 4px;
+      font-size: 1.4rem;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    .stars span {
+      color: #4b5563;
+    }
+    .stars span.active {
+      color: #fbbf24;
+    }
+
+    /* User Account & Incident Detail modals use same base modal styles */
+    #userModalBg {
+      z-index: 70;
+    }
+    #incidentDetailBg {
+      z-index: 75;
+    }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(0);
+      }
+      .sidebar.collapsed {
+        transform: translateX(-100%);
+      }
+      .sidebar-toggle {
+        right: -10px;
+      }
+      .main-header {
+        padding-left: 14px;
+      }
+      .page-content {
+        padding: 18px 16px 26px 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <button class="sidebar-toggle" id="sidebarToggle" title="Toggle navigation">&lt;</button>
+      <div class="sidebar-header">
+        <svg class="sidebar-logo-shield" viewBox="0 0 64 64">
+          <path d="M32 4L10 10v18c0 14.1 9.1 26.8 22 32 12.9-5.2 22-17.9 22-32V10L32 4z" />
+          <path d="M29 44.5 20.5 36l3.5-3.5L29 37.6l11-11.1 3.5 3.5z" fill="#0f172a" />
+        </svg>
+        <div class="sidebar-title">ThreatLens</div>
+      </div>
+
+      <div class="sidebar-menu">
+        <button class="sidebar-btn" onclick="showUserAccount()">
+          <span class="icon">👤</span><span class="label">User Account</span>
+        </button>
+        <button class="sidebar-btn" onclick="openModal('login')">
+          <span class="icon">🔐</span><span class="label">Login</span>
+        </button>
+        <button class="sidebar-btn" onclick="openModal('signup')">
+          <span class="icon">🆕</span><span class="label">Sign Up</span>
+        </button>
+        <button class="sidebar-btn" onclick="openModal('contact')">
+          <span class="icon">☎️</span><span class="label">Contact Us</span>
+        </button>
+        <button class="sidebar-btn" onclick="openModal('about')">
+          <span class="icon">❓</span><span class="label">About</span>
+        </button>
+        <button class="sidebar-btn" onclick="openModal('rate')">
+          <span class="icon">⭐</span><span class="label">Rate Us</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <section class="main-section">
+      <header class="main-header">
+        <div class="logo">
+          <svg viewBox="0 0 64 64">
+            <path d="M32 4L10 10v18c0 14.1 9.1 26.8 22 32 12.9-5.2 22-17.9 22-32V10L32 4z" />
+            <path d="M29 44.5 20.5 36l3.5-3.5L29 37.6l11-11.1 3.5 3.5z" fill="#0f172a" />
+          </svg>
+          <span>ThreatLens</span>
+        </div>
+        <nav>
+          <a class="nav-link active" onclick="navigatePage('home')">Home</a>
+          <a class="nav-link" onclick="navigatePage('incidents')">Incidents</a>
+          <a class="nav-link" onclick="navigatePage('analytics')">Analytics</a>
+          <a class="nav-link" onclick="navigatePage('reports')">Reports</a>
+        </nav>
+        <div class="notif-bell" id="notifBell" onclick="toggleNotifPanel()">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2a6 6 0 0 0-6 6v2.5c0 .6-.2 1.2-.6 1.6L4 14v1h16v-1l-1.4-1.9c-.4-.4-.6-1-.6-1.6V8a6 6 0 0 0-6-6z" />
+            <path d="M9.75 18A2.25 2.25 0 0 0 12 20.25 2.25 2.25 0 0 0 14.25 18h-4.5z" />
+          </svg>
+          <span class="notif-dot" id="notifDot"></span>
+          <div class="notif-panel" id="notifPanel">
+            <h4>Notifications</h4>
+            <ul id="notifList">
+              <li class="notif-empty">No new notifications.</li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <!-- Home -->
+        <section id="homePage" class="page-content">
+          <div class="hero">
+            <div class="hero-text">
+              <div class="hero-title">Secure Your Digital Perimeter</div>
+              <div class="hero-subtitle">
+                Real-time intelligence for proactive defense against evolving cyber threats.
+              </div>
+              <div class="hero-actions">
+                <button id="btnViewAnalytics" onclick="homeNavigate('analytics')">
+                  View Analytics
+                </button>
+                <button id="btnViewIncidents" onclick="homeNavigate('incidents')">
+                  View Incidents
+                </button>
+              </div>
+            </div>
+            <div class="hero-visual">
+              <svg viewBox="0 0 120 140">
+                <defs>
+                  <linearGradient id="shieldFill" x1="0" x2="1" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#22d3ee" />
+                    <stop offset="100%" stop-color="#0ea5e9" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M60 6 22 18v36c0 22.7 14.9 43.2 38 50 23.1-6.8 38-27.3 38-50V18L60 6z"
+                  fill="url(#shieldFill)" stroke="#0f172a" stroke-width="3"
+                />
+                <path d="M50 90 38 78l6-6 6 6 22-22 6 6z" fill="#0f172a" />
+              </svg>
+              <p style="margin-top:12px;font-size:0.9rem;color:#e5e7eb;">
+                Unified view of global and Indian cyber incidents, CVEs, and threat intelligence.
+              </p>
+            </div>
+          </div>
+
+          <div class="map-section">
+            <h2>Global Threat Intelligence Map</h2>
+            <div id="dashboardMap"></div>
+            <div class="legend">
+              <strong>Threat Severity Legend:</strong>
+              <span class="dot" style="background:#ef4444;"></span>Critical
+              <span class="dot" style="background:#3b82f6;margin-left:8px;"></span>High
+              <span class="dot" style="background:#eab308;margin-left:8px;"></span>Medium
+              <span class="dot" style="background:#22c55e;margin-left:8px;"></span>Low
+            </div>
+          </div>
+
+          <div class="stat-grid" id="quickStats">
+            <div class="stat-card">
+              <div class="stat-label">Active Incidents Today</div>
+              <div class="stat-value" id="statActiveToday">--</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Total Incidents This Week</div>
+              <div class="stat-value" id="statTotalWeek">--</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Blocked Threats</div>
+              <div class="stat-value" id="statBlockedThreats">--</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Vulnerabilities Detected</div>
+              <div class="stat-value" id="statVulnerabilities">--</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Incidents -->
+        <section id="incidentsPage" class="page-content" style="display:none;">
+          <h2>Incidents</h2>
+          <div class="filters">
+            <div>
+              <label>Severity:</label>
+              <select id="severityFilter" onchange="renderIncidents()">
+                <option value="">All</option>
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+            <div>
+              <label>Type:</label>
+              <select id="typeFilter" onchange="renderIncidents()">
+                <option value="">All</option>
+                <option value="Ransomware">Ransomware</option>
+                <option value="DDoS">DDoS</option>
+                <option value="Malware">Malware</option>
+                <option value="Malicious IP">Malicious IP</option>
+                <option value="CVE">CVE</option>
+                <option value="Advisory">Advisory</option>
+                <option value="Phishing">Phishing</option>
+                <option value="Threat Intelligence">Threat Intelligence</option>
+              </select>
+            </div>
+            <div>
+              <label>Search:</label><br />
+              <input id="searchFilter" type="text" placeholder="Title, description, area..." oninput="renderIncidents()" />
+            </div>
+          </div>
+          <div id="incidentsContainer">Loading incidents...</div>
+        </section>
+
+        <!-- Analytics -->
+        <section id="analyticsPage" class="page-content" style="display:none;">
+          <h2>Analytics</h2>
+          <p style="font-size:0.95rem;color:#9ca3af;">
+            Visual breakdown of incidents by severity, sector and time to help understand where risk is concentrated.
+          </p>
+          <div class="chart-row">
+            <div class="chart-card">
+              <h3>Incidents by Severity</h3>
+              <canvas id="severityBar"></canvas>
+            </div>
+            <div class="chart-card">
+              <h3>Incidents by Sector</h3>
+              <canvas id="sectorPie"></canvas>
+            </div>
+            <div class="chart-card">
+              <h3>Incidents over Time</h3>
+              <canvas id="timeLine"></canvas>
+            </div>
+          </div>
+          <div id="analyticsLegend">
+            <strong>Color meaning:</strong>
+            <span class="dot" style="background:#ef4444;"></span>Critical – immediate action required;
+            <span class="dot" style="background:#3b82f6;margin-left:8px;"></span>High – serious but contained;
+            <span class="dot" style="background:#eab308;margin-left:8px;"></span>Medium – monitor closely;
+            <span class="dot" style="background:#22c55e;margin-left:8px;"></span>Low – informational or minor impact.
+          </div>
+        </section>
+
+        <!-- Reports -->
+        <section id="reportsPage" class="page-content" style="display:none;">
+          <h2>Cybersecurity Reports & Articles</h2>
+          <p class="reports-intro">
+            Curated blogs and analysis from leading cybersecurity sources. Click through to read the original articles.
+          </p>
+          <ul class="reports-list" id="reportsList"></ul>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <!-- Generic sidebar modal -->
+  <div class="modal-bg" id="genericModalBg">
+    <div class="modal" id="genericModal">
+      <div class="modal-header">
+        <h3 id="genericModalTitle"></h3>
+        <button class="modal-close" onclick="closeGenericModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="genericModalBody"></div>
+      <div class="modal-actions" id="genericModalActions"></div>
+    </div>
+  </div>
+
+  <!-- User Account Modal -->
+  <div class="modal-bg" id="userModalBg">
+    <div class="modal" id="userModal">
+      <div class="modal-header">
+        <h3>User Account</h3>
+        <button class="modal-close" onclick="closeUserModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="userModalBody"></div>
+      <div class="modal-actions">
+        <button class="btn-outline" id="editUserBtn" onclick="toggleEditUser()">Edit</button>
+        <button class="btn-primary" id="saveUserBtn" style="display:none;" onclick="saveUserDetails()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incident detail modal -->
+  <div class="modal-bg" id="incidentDetailBg">
+    <div class="modal" id="incidentDetailModal">
+      <div class="modal-header">
+        <h3 id="incidentDetailTitle"></h3>
+        <button class="modal-close" onclick="closeIncidentDetail()">&times;</button>
+      </div>
+      <div class="modal-body" id="incidentDetailBody"></div>
+      <div class="modal-actions">
+        <button class="btn-outline" onclick="closeIncidentDetail()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const API_URL = "http://localhost:5000/incidents";
+    const STATS_URL = "http://localhost:5000/stats";
+
+    let allIncidents = [];
+    let dashboardMap;
+    let severityBarChart, sectorPieChart, timeLineChart;
+    let currentRating = 0;
+
+    // Sidebar toggle
+    const sidebar = document.getElementById("sidebar");
+    const sidebarToggle = document.getElementById("sidebarToggle");
+    sidebarToggle.addEventListener("click", () => {
+      const collapsed = sidebar.classList.toggle("collapsed");
+      sidebarToggle.textContent = collapsed ? ">" : "<";
+    });
+
+    // Top navigation
+    function navigatePage(page) {
+      document.querySelectorAll(".nav-link").forEach((a) => a.classList.remove("active"));
+      document.querySelectorAll(".nav-link").forEach((a) => {
+        if (a.textContent.trim().toLowerCase() === page) a.classList.add("active");
+      });
+      document.querySelectorAll(".page-content").forEach((p) => (p.style.display = "none"));
+
+      if (page === "home") {
+        document.getElementById("homePage").style.display = "block";
+        setTimeout(() => {
+          if (dashboardMap) dashboardMap.invalidateSize();
+        }, 200);
+      } else if (page === "incidents") {
+        document.getElementById("incidentsPage").style.display = "block";
+      } else if (page === "analytics") {
+        document.getElementById("analyticsPage").style.display = "block";
+        renderAnalyticsCharts();
+      } else if (page === "reports") {
+        document.getElementById("reportsPage").style.display = "block";
+      }
+    }
+
+    // Home hero buttons -> navigate + highlight on click
+    function homeNavigate(targetPage) {
+      // reset buttons
+      document.getElementById("btnViewAnalytics").classList.remove("active");
+      document.getElementById("btnViewIncidents").classList.remove("active");
+      // highlight clicked
+      if (targetPage === "analytics") {
+        document.getElementById("btnViewAnalytics").classList.add("active");
+      } else if (targetPage === "incidents") {
+        document.getElementById("btnViewIncidents").classList.add("active");
+      }
+      navigatePage(targetPage);
+    }
+
+    // Notifications
+    function toggleNotifPanel() {
+      const panel = document.getElementById("notifPanel");
+      panel.style.display = panel.style.display === "block" ? "none" : "block";
+      setTimeout(() => {
+        panel.style.display = "none";
+      }, 4000);
+    }
+
+    function updateNotifications() {
+      const list = document.getElementById("notifList");
+      const dot = document.getElementById("notifDot");
+      if (!allIncidents.length) {
+        list.innerHTML = '<li class="notif-empty">No new notifications.</li>';
+        dot.style.display = "none";
+        return;
+      }
+      const latest = allIncidents.slice(0, 5);
+      dot.style.display = "block";
+      list.innerHTML = latest
+        .map((i) => `<li><strong>${i.severity}</strong> • ${i.title}</li>`)
+        .join("");
+    }
+
+    // Map
+    function initMap() {
+      dashboardMap = L.map("dashboardMap").setView([21.1466, 79.0889], 5);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors",
+      }).addTo(dashboardMap);
+    }
+
+    function addMarkersToMap(incidents) {
+      if (!dashboardMap) return;
+      dashboardMap.eachLayer((layer) => {
+        if (layer instanceof L.CircleMarker) dashboardMap.removeLayer(layer);
+      });
+
+      const cityCoords = {
+        Delhi: [28.7041, 77.1025],
+        Mumbai: [19.076, 72.8777],
+        Pune: [18.5204, 73.8567],
+        Jaipur: [26.9124, 75.7873],
+        Bengaluru: [12.9716, 77.5946],
+        Chennai: [13.0827, 80.2707],
+        Kolkata: [22.5726, 88.3639],
+        Ahmedabad: [23.0225, 72.5714],
+        India: [21.1466, 79.0889],
+        Global: [21.1466, 79.0889],
+      };
+
+      incidents.forEach((i) => {
+        const coord = cityCoords[i.area] || cityCoords["Global"];
+        let color = "#22c55e";
+        if (i.severity === "Critical") color = "#ef4444";
+        else if (i.severity === "High") color = "#3b82f6";
+        else if (i.severity === "Medium") color = "#eab308";
+
+        const marker = L.circleMarker(coord, {
+          radius: 7,
+          fillColor: color,
+          color: "#ffffff",
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.8,
+        }).addTo(dashboardMap);
+
+        const popupHtml = `
+          <strong>${i.title}</strong><br/>
+          ${i.area || "Unknown"} | ${i.severity}<br/>
+          ${i.date || ""}<br/>
+          <a href="#" onclick="focusIncident('${i.id}'); return false;" style="color:#38bdf8;">View incident details</a>
+        `;
+        marker.bindPopup(popupHtml);
+      });
+    }
+
+    // Fetch data
+    async function fetchIncidents() {
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        allIncidents = data || [];
+        addMarkersToMap(allIncidents);
+        renderIncidents();
+        updateNotifications();
+        renderAnalyticsCharts();
+      } catch (e) {
+        document.getElementById("incidentsContainer").innerText =
+          "Error loading incidents. Ensure backend is running.";
+      }
+    }
+
+    async function fetchStats() {
+      try {
+        const res = await fetch(STATS_URL);
+        const s = await res.json();
+        document.getElementById("statActiveToday").innerText = s.activeToday ?? "--";
+        document.getElementById("statTotalWeek").innerText = s.totalWeek ?? "--";
+        document.getElementById("statBlockedThreats").innerText = s.blockedThreats ?? "--";
+        document.getElementById("statVulnerabilities").innerText = s.vulnerabilities ?? "--";
+      } catch {
+        document.getElementById("statActiveToday").innerText = "12";
+        document.getElementById("statTotalWeek").innerText = "89";
+        document.getElementById("statBlockedThreats").innerText = "1247";
+        document.getElementById("statVulnerabilities").innerText = "34";
+      }
+    }
+
+    // Render incidents and make cards clickable for details
+    function renderIncidents() {
+      const container = document.getElementById("incidentsContainer");
+      if (!allIncidents.length) {
+        container.innerText = "No incidents available.";
+        return;
+      }
+      const sev = document.getElementById("severityFilter").value;
+      const type = document.getElementById("typeFilter").value;
+      const search = document.getElementById("searchFilter").value.toLowerCase();
+
+      let incidents = allIncidents.slice();
+      if (sev) incidents = incidents.filter((i) => i.severity === sev);
+      if (type) incidents = incidents.filter((i) => i.type === type);
+      if (search) {
+        incidents = incidents.filter(
+          (i) =>
+            (i.title && i.title.toLowerCase().includes(search)) ||
+            (i.description && i.description.toLowerCase().includes(search)) ||
+            (i.area && i.area.toLowerCase().includes(search))
+        );
+      }
+      if (!incidents.length) {
+        container.innerText = "No incidents match the filters.";
+        return;
+      }
+
+      const html =
+        '<div class="incidents-grid">' +
+        incidents
+          .map((i) => {
+            const sevClass =
+              i.severity === "Critical"
+                ? "severity-critical"
+                : i.severity === "High"
+                ? "severity-high"
+                : i.severity === "Medium"
+                ? "severity-medium"
+                : "severity-low";
+            return `
+          <div class="incident-card" id="incident-${i.id}" onclick="openIncidentDetail('${i.id}')">
+            <div class="incident-title">${i.title}</div>
+            <span class="severity-badge ${sevClass}">${i.severity}</span>
+            ${i.type ? `<div class="type-badge">${i.type}</div>` : ""}
+            <div class="incident-meta">
+              ${i.area || "Unknown area"} • ${i.sector || "Various sector"} • ${i.date || ""}
+            </div>
+            <div class="incident-description">
+              ${i.description || ""}
+            </div>
+          </div>`;
+          })
+          .join("") +
+        "</div>";
+      container.innerHTML = html;
+    }
+
+    // Map popup -> jump to incident card and open details
+    function focusIncident(incidentId) {
+      navigatePage("incidents");
+      setTimeout(() => {
+        const el = document.getElementById("incident-" + incidentId);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          el.style.boxShadow = "0 0 0 2px #38bdf8";
+          setTimeout(() => {
+            el.style.boxShadow = "";
+          }, 2000);
+          openIncidentDetail(incidentId);
+        }
+      }, 250);
+    }
+
+    // Incident detail modal: show expanded info + dummy action/protection text
+    function openIncidentDetail(incidentId) {
+      const incident = allIncidents.find((i) => String(i.id) === String(incidentId));
+      if (!incident) return;
+      const bg = document.getElementById("incidentDetailBg");
+      const titleEl = document.getElementById("incidentDetailTitle");
+      const bodyEl = document.getElementById("incidentDetailBody");
+
+      const actionTaken =
+        incident.actionTaken ||
+        "Security teams have been notified and mitigation steps such as isolating affected systems and blocking malicious indicators are in progress.";
+      const protectionSteps =
+        incident.protection ||
+        "• Apply vendor patches and updates promptly.\n" +
+        "• Enforce strong MFA and least-privilege access.\n" +
+        "• Monitor for related indicators of compromise.\n" +
+        "• Regularly back up critical data and test recovery.";
+
+      titleEl.innerText = incident.title;
+      bodyEl.innerHTML = `
+        <div class="form-field">
+          <label>Sector</label>
+          <div>${incident.sector || "Various"}</div>
+        </div>
+        <div class="form-field">
+          <label>Severity</label>
+          <div>${incident.severity}</div>
+        </div>
+        <div class="form-field">
+          <label>Date</label>
+          <div>${incident.date || "Unknown"}</div>
+        </div>
+        <div class="form-field">
+          <label>Locality / Region</label>
+          <div>${incident.area || "Unknown"}</div>
+        </div>
+        <div class="form-field">
+          <label>Description</label>
+          <div>${incident.description || "No description provided."}</div>
+        </div>
+        <div class="form-field">
+          <label>Action Taken</label>
+          <div>${actionTaken}</div>
+        </div>
+        <div class="form-field">
+          <label>Recommended Protection Steps</label>
+          <div style="white-space:pre-line;">${protectionSteps}</div>
+        </div>
+      `;
+      bg.style.display = "block";
+    }
+    function closeIncidentDetail() {
+      document.getElementById("incidentDetailBg").style.display = "none";
+    }
+
+    // Analytics
+    function renderAnalyticsCharts() {
+      if (!allIncidents.length) return;
+      if (severityBarChart) severityBarChart.destroy();
+      if (sectorPieChart) sectorPieChart.destroy();
+      if (timeLineChart) timeLineChart.destroy();
+
+      const sevLabels = ["Critical", "High", "Medium", "Low"];
+      const sevColors = ["#ef4444", "#3b82f6", "#eab308", "#22c55e"];
+      const sevData = sevLabels.map(
+        (s) => allIncidents.filter((i) => i.severity === s).length
+      );
+      const ctxSev = document.getElementById("severityBar").getContext("2d");
+      severityBarChart = new Chart(ctxSev, {
+        type: "bar",
+        data: { labels: sevLabels, datasets: [{ data: sevData, backgroundColor: sevColors }] },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: "#e5e7eb" }, grid: { color: "#1f2937" } },
+            y: { ticks: { color: "#e5e7eb" }, grid: { color: "#1f2937" }, beginAtZero: true },
+          },
+        },
+      });
+
+      const sectorCounts = {};
+      allIncidents.forEach((i) => {
+        const s = i.sector || "Other";
+        sectorCounts[s] = (sectorCounts[s] || 0) + 1;
+      });
+      const sectorLabels = Object.keys(sectorCounts);
+      const sectorValues = Object.values(sectorCounts);
+      const sectorColors = [
+        "#22d3ee","#6366f1","#f97316","#84cc16",
+        "#facc15","#14b8a6","#a855f7","#fb7185"
+      ];
+      const ctxSector = document.getElementById("sectorPie").getContext("2d");
+      sectorPieChart = new Chart(ctxSector, {
+        type: "pie",
+        data: {
+          labels: sectorLabels,
+          datasets: [{ data: sectorValues, backgroundColor: sectorColors.slice(0, sectorLabels.length) }],
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: "bottom", labels: { color: "#e5e7eb" } } },
+        },
+      });
+
+      const dateCounts = {};
+      allIncidents.forEach((i) => {
+        if (!i.date) return;
+        dateCounts[i.date] = (dateCounts[i.date] || 0) + 1;
+      });
+      const sortedDates = Object.keys(dateCounts).sort();
+      const dateValues = sortedDates.map((d) => dateCounts[d]);
+      const ctxTime = document.getElementById("timeLine").getContext("2d");
+      timeLineChart = new Chart(ctxTime, {
+        type: "line",
+        data: {
+          labels: sortedDates,
+          datasets: [
+            {
+              label: "Incidents",
+              data: dateValues,
+              borderColor: "#38bdf8",
+              backgroundColor: "rgba(56,189,248,0.2)",
+              tension: 0.25,
+              fill: true,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: "#e5e7eb" } } },
+          scales: {
+            x: { ticks: { color: "#e5e7eb" }, grid: { color: "#1f2937" } },
+            y: { ticks: { color: "#e5e7eb" }, grid: { color: "#1f2937" }, beginAtZero: true },
+          },
+        },
+      });
+    }
+
+    // Reports data
+    const curatedReports = [
+      {
+        title: "The Cybersecurity Canon",
+        author: "Rick Howard",
+        date: "2024-08-01",
+        source: "Palo Alto Networks / Cybersecurity Canon",
+        description: "A long-term project to identify must-read cybersecurity books and resources.",
+        url: "https://www.paloaltonetworks.com/cybersecurity-canon",
+      },
+      {
+        title: "The Cost of a Data Breach Report",
+        author: "IBM Security",
+        date: "2024-07-15",
+        source: "IBM",
+        description: "Yearly analysis of breach trends, costs, and defensive best practices.",
+        url: "https://www.ibm.com/security/data-breach",
+      },
+      {
+        title: "Verizon Data Breach Investigations Report (DBIR)",
+        author: "Verizon Security Research",
+        date: "2024-06-01",
+        source: "Verizon",
+        description: "Annual report analysing thousands of real-world incidents.",
+        url: "https://www.verizon.com/business/resources/reports/dbir/",
+      },
+      {
+        title: "CrowdStrike Global Threat Report",
+        author: "CrowdStrike Intelligence",
+        date: "2024-03-10",
+        source: "CrowdStrike",
+        description: "Overview of the most active threat actors, campaigns, and tactics worldwide.",
+        url: "https://www.crowdstrike.com/resources/reports/",
+      },
+      {
+        title: "Krebs on Security – Blog",
+        author: "Brian Krebs",
+        date: "Ongoing",
+        source: "KrebsOnSecurity",
+        description: "Independent investigative reporting on cybercrime and major breaches.",
+        url: "https://krebsonsecurity.com/",
+      },
+    ];
+
+    function renderReports() {
+      const list = document.getElementById("reportsList");
+      list.innerHTML = curatedReports
+        .map(
+          (r) => `
+        <li class="report-item">
+          <div class="report-title">${r.title}</div>
+          <div class="report-meta">
+            Author: ${r.author} • Source: ${r.source} • Published: ${r.date}
+          </div>
+          <div class="report-desc">${r.description}</div>
+          <a class="report-link" href="${r.url}" target="_blank" rel="noopener">
+            Read Article
+          </a>
+        </li>`
+        )
+        .join("");
+    }
+
+    // User Account modal
+    const defaultUser = {
+      name: "Darshita Saraswat",
+      email: "user@example.com",
+      dob: "2003-01-01",
+      role: "Security Analyst",
+      organization: "ThreatLens Lab",
+    };
+    let currentUser = { ...defaultUser };
+    let editMode = false;
+
+    function loadUserFromStorage() {
+      try {
+        const stored = localStorage.getItem("threatlens_user");
+        if (stored) currentUser = JSON.parse(stored);
+      } catch {}
+    }
+    function showUserAccount() {
+      loadUserFromStorage();
+      editMode = false;
+      renderUserModal();
+      document.getElementById("userModalBg").style.display = "block";
+    }
+    function renderUserModal() {
+      const body = document.getElementById("userModalBody");
+      if (!editMode) {
+        body.innerHTML = `
+          <div class="form-field"><label>Full Name</label><div>${currentUser.name}</div></div>
+          <div class="form-field"><label>Email</label><div>${currentUser.email}</div></div>
+          <div class="form-field"><label>Date of Birth</label><div>${currentUser.dob}</div></div>
+          <div class="form-field"><label>Role</label><div>${currentUser.role}</div></div>
+          <div class="form-field"><label>Organization</label><div>${currentUser.organization}</div></div>
+        `;
+        document.getElementById("editUserBtn").style.display = "inline-block";
+        document.getElementById("saveUserBtn").style.display = "none";
+      } else {
+        body.innerHTML = `
+          <div class="form-field"><label>Full Name</label><input id="userNameInput" value="${currentUser.name}" /></div>
+          <div class="form-field"><label>Email</label><input id="userEmailInput" value="${currentUser.email}" /></div>
+          <div class="form-field"><label>Date of Birth</label><input id="userDobInput" type="date" value="${currentUser.dob}" /></div>
+          <div class="form-field"><label>Role</label><input id="userRoleInput" value="${currentUser.role}" /></div>
+          <div class="form-field"><label>Organization</label><input id="userOrgInput" value="${currentUser.organization}" /></div>
+        `;
+        document.getElementById("editUserBtn").style.display = "none";
+        document.getElementById("saveUserBtn").style.display = "inline-block";
+      }
+    }
+    function toggleEditUser() {
+      editMode = true;
+      renderUserModal();
+    }
+    function saveUserDetails() {
+      currentUser = {
+        name: document.getElementById("userNameInput").value.trim(),
+        email: document.getElementById("userEmailInput").value.trim(),
+        dob: document.getElementById("userDobInput").value,
+        role: document.getElementById("userRoleInput").value.trim(),
+        organization: document.getElementById("userOrgInput").value.trim(),
+      };
+      try {
+        localStorage.setItem("threatlens_user", JSON.stringify(currentUser));
+      } catch {}
+      editMode = false;
+      renderUserModal();
+    }
+    function closeUserModal() {
+      document.getElementById("userModalBg").style.display = "none";
+    }
+
+    // Generic sidebar modal (login/signup/contact/about/rate)
+    function openModal(type) {
+      const bg = document.getElementById("genericModalBg");
+      const titleEl = document.getElementById("genericModalTitle");
+      const bodyEl = document.getElementById("genericModalBody");
+      const actionsEl = document.getElementById("genericModalActions");
+      let html = "";
+      let actionsHtml = "";
+
+      if (type === "login") {
+        titleEl.innerText = "Login";
+        html = `
+          <div class="form-field">
+            <label>Email</label>
+            <input type="email" id="loginEmail" placeholder="user@example.com" />
+          </div>
+        `;
+        actionsHtml = `<button class="btn-primary" onclick="alert('Logged in (demo only).')">Login</button>`;
+      } else if (type === "signup") {
+        titleEl.innerText = "Sign Up";
+        html = `
+          <div class="form-field">
+            <label>Full Name</label>
+            <input id="signupName" placeholder="Your full name" />
+          </div>
+          <div class="form-field">
+            <label>Age</label>
+            <input id="signupAge" type="number" min="10" max="100" />
+          </div>
+          <div class="form-field">
+            <label>Email</label>
+            <input id="signupEmail" type="email" placeholder="user@example.com" />
+          </div>
+          <div class="form-field">
+            <label>Country</label>
+            <input id="signupCountry" placeholder="India" />
+          </div>
+          <div class="form-field">
+            <label>Phone Number</label>
+            <input id="signupPhone" placeholder="+91-XXXXXXXXXX" />
+          </div>
+        `;
+        actionsHtml = `<button class="btn-primary" onclick="alert('Sign up submitted (demo only).')">Register</button>`;
+      } else if (type === "contact") {
+        titleEl.innerText = "Contact Us";
+        html = `
+          <p>For any queries, reach out to our team at:</p>
+          <p><strong>support@threatlens.app</strong></p>
+          <div class="form-field">
+            <label>Message (optional)</label>
+            <textarea id="contactMessage" placeholder="Describe your query..."></textarea>
+          </div>
+        `;
+        actionsHtml = `<button class="btn-primary" onclick="alert('Message submitted (demo only).')">Submit</button>`;
+      } else if (type === "about") {
+        titleEl.innerText = "About ThreatLens";
+        html = `
+          <p>
+            ThreatLens is a cybersecurity incident feed and analytics dashboard that
+            aggregates CVEs, threat intelligence, malware activity and Indian CERT-In
+            style alerts into a single real-time view.
+          </p>
+          <p>
+            Use it to explore which sectors, locations and organizations are most
+            affected, and to keep track of critical and high severity incidents
+            across the globe.
+          </p>
+        `;
+        actionsHtml = "";
+      } else if (type === "rate") {
+        titleEl.innerText = "Rate Us";
+        html = `
+          <p>Rate your experience with ThreatLens:</p>
+          <div class="stars" id="ratingStars">
+            <span data-star="1">&#9733;</span>
+            <span data-star="2">&#9733;</span>
+            <span data-star="3">&#9733;</span>
+            <span data-star="4">&#9733;</span>
+            <span data-star="5">&#9733;</span>
+          </div>
+        `;
+        actionsHtml = `<button class="btn-primary" onclick="submitRating()">Submit Rating</button>`;
+      }
+
+      bodyEl.innerHTML = html;
+      actionsEl.innerHTML = actionsHtml;
+      bg.style.display = "block";
+
+      if (type === "rate") {
+        initStars();
+      }
+    }
+
+    function closeGenericModal() {
+      document.getElementById("genericModalBg").style.display = "none";
+    }
+
+    // Stars rating
+    function initStars() {
+      const container = document.getElementById("ratingStars");
+      const stars = container.querySelectorAll("span");
+      currentRating = 0;
+      stars.forEach((s) => {
+        s.addEventListener("mouseover", () => {
+          const val = parseInt(s.dataset.star, 10);
+          highlightStars(val);
+        });
+        s.addEventListener("mouseout", () => {
+          highlightStars(currentRating);
+        });
+        s.addEventListener("click", () => {
+          currentRating = parseInt(s.dataset.star, 10);
+          highlightStars(currentRating);
+        });
+      });
+      highlightStars(currentRating);
+    }
+    function highlightStars(val) {
+      const container = document.getElementById("ratingStars");
+      if (!container) return;
+      const stars = container.querySelectorAll("span");
+      stars.forEach((s) => {
+        const starVal = parseInt(s.dataset.star, 10);
+        s.classList.toggle("active", starVal <= val);
+      });
+    }
+    function submitRating() {
+      if (!currentRating) {
+        alert("Please select a rating before submitting.");
+        return;
+      }
+      alert("Thanks for rating us " + currentRating + " / 5 (demo only).");
+      closeGenericModal();
+    }
+
+    // Init
+    window.onload = () => {
+      navigatePage("home");
+      initMap();
+      fetchStats();
+      fetchIncidents();
+      renderReports();
+    };
+
+    // Click-outside handlers
+    document.addEventListener("click", (e) => {
+      const bell = document.getElementById("notifBell");
+      const panel = document.getElementById("notifPanel");
+      if (!bell.contains(e.target)) {
+        panel.style.display = "none";
+      }
+    });
+  </script>
+</body>
+</html>
