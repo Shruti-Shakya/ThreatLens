@@ -37,7 +37,7 @@ Threatlens/
 │ └── package-lock.json
 └── index.js
 
-
+```
 ## Prerequisites
 
 Before you begin, ensure you have installed:
