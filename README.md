@@ -161,9 +161,7 @@ This project was developed with the help of AI tools for code generation and gui
 For questions or collaboration:
 
 **Shruti Shakya**
-[shruti.shakya411@gmail.com](mailto:shruti.shakya411@gmail.com)
-
-For questions or collaboration: shruti.shakya411@gmail.com
+shruti.shakya411@gmail.com
 
 
 
