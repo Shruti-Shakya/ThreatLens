@@ -27,6 +27,7 @@ ThreatLens is a full-stack cybersecurity dashboard that aggregates threat data f
 - Express.js
 
 ## Project Structure
+```text
 Threatlens/
 ├── frontend/
 │ └── dashboard.html
