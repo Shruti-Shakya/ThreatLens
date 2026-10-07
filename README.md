@@ -140,8 +140,9 @@ http://localhost:8082/dashboard.html
 
 ## Contributors
 
-* **Darshita Saraswat** – Core development and project structure
-* **Shruti Shakya** – Setup, debugging, integration, testing, and AI-assisted development
+* **Darshita Saraswat** – Core development 
+* **Samriddhi Awasthi** – Project structure and AI-assisted development
+* **Shruti Shakya** – Setup, debugging, integration, and testing
 
 This is a collaborative group project. Contributions are described individually above.
 
